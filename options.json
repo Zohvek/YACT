@@ -16,7 +16,9 @@
     "markets": [
       "coinbase-pro:btc/usd",
       "coinbase-pro:eth/usd",
-      "coinbase-pro:eth/btc"
+      "coinbase-pro:eth/btc",
+      "bitstamp:eth/usd",
+      "bitstamp:btc/usd"
     ]
   }
   

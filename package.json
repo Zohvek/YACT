@@ -7,28 +7,27 @@
     "main": "index.js",
     "bin": "bin/crypticker.js",
     "scripts": {
-      "start": "node index.js",
-      "lint": "eslint *.js"
+        "start": "node index.js",
+        "lint": "eslint *.js"
     },
     "repository": {
-      "type": "git",
-      "url": "git+https://github.com/Zohvek/YACT"
+        "type": "git",
+        "url": "git+https://github.com/Zohvek/YACT"
     },
     "bugs": {
-      "url": "https://github.com/Zohvek/YACT/issues"
+        "url": "https://github.com/Zohvek/YACT/issues"
     },
     "dependencies": {
-      "colors": "^1.4.0",
-      "lodash": "^4.17.19",
-      "moment": "^2.29.1",
-      "needle": "^2.5.2",
-      "pad": "^3.2.0",
-      "yargs": "^16.2.0"
+        "colors": "^1.4.0",
+        "lodash": "^4.17.19",
+        "moment": "^2.29.1",
+        "needle": "^2.5.2",
+        "pad": "^3.2.0",
+        "yargs": "^16.2.0"
     },
     "devDependencies": {
-      "eslint": "^5.16.0",
-      "eslint-config-airbnb": "^17.1.1",
-      "eslint-plugin-import": "^2.22.1"
+        "eslint": "^5.16.0",
+        "eslint-config-airbnb": "^17.1.1",
+        "eslint-plugin-import": "^2.22.1"
     }
-  }
-  
+}
