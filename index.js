@@ -254,3 +254,108 @@ const writeToStdout = (limitReached, priceData, allowance) => {
   return true;
 };
 
+// query cryptowatch for the data..
+const retrieveMarketData = () => {
+  const priceData = {};
+  const primaryCurrencies = [];
+  const secondaryCurrencies = [];
+  const exchanges = [];
+  const apiKeyString = options.apiKey ? `?apikey=${options.apiKey}` : '';
+
+  needle.get(`https://api.cryptowat.ch/markets/summaries${apiKeyString}`, (error, response) => {
+    const body = response && response.body;
+
+    if (!error && body && response.statusCode === 200) {
+      _.forEach(body.result, (data, market) => {
+        const marketsSlashesReplaced = options.markets.map(marketOption => marketOption.replace('/', ''));
+        const marketMatchIndex = marketsSlashesReplaced.indexOf(market);
+
+        // Disregard any options that do not exist within response
+        if (marketMatchIndex === -1) {
+          return;
+        }
+
+        const marketMatch = options.markets[marketMatchIndex];
+        const [exchange, marketName] = marketMatch.split(':');
+        let primaryCurrency;
+        let secondaryCurrency;
+
+        // Allow for vanity use of '/' to split primary and secondary currency
+        if (marketName.includes('/')) {
+          [primaryCurrency, secondaryCurrency] = marketName.split('/');
+        } else {
+          primaryCurrency = marketName.substr(0, 3);
+          secondaryCurrency = marketName.substr(3, 3);
+        }
+
+        primaryCurrency = primaryCurrency.toUpperCase();
+        secondaryCurrency = secondaryCurrency.toUpperCase();
+
+        primaryCurrencies.push(primaryCurrency);
+        secondaryCurrencies.push(secondaryCurrency);
+        exchanges.push(exchangeLookup[exchange]);
+        priceData[primaryCurrency] = priceData[primaryCurrency] || {};
+        priceData[primaryCurrency][secondaryCurrency] = priceData[primaryCurrency][secondaryCurrency] || {};
+        priceData[primaryCurrency][secondaryCurrency][exchangeLookup[exchange]] = body && body.result[market];
+      });
+
+      const sortedPrimaryCurrencies = primaryCurrencies.sort((a, b) => b.length - a.length);
+      const sortedSecondaryCurrencies = secondaryCurrencies.sort((a, b) => b.length - a.length);
+      const sortedExchanges = exchanges.sort((a, b) => b.length - a.length);
+
+      priceData.longestPrimaryCurrencyLength = sortedPrimaryCurrencies
+        && sortedPrimaryCurrencies[0]
+        && sortedPrimaryCurrencies[0].length;
+      priceData.longestSecondaryCurrencyLength = sortedSecondaryCurrencies
+        && sortedSecondaryCurrencies[0]
+        && sortedSecondaryCurrencies[0].length;
+      priceData.longestExchangeLength = sortedExchanges
+        && sortedExchanges[0]
+        && sortedExchanges[0].length;
+
+      if (priceData) {
+        return writeToStdout(null, priceData, response.body.allowance);
+      }
+    } else if (response && response.statuscode === 429) {
+      return writeToStdout(true);
+    }
+
+    return writeToStdout(false, null);
+  });
+};
+
+// Retrieve exchange information from endpoint
+const retrieveExchangeData = () => {
+  const apiKeyString = options.apiKey ? `?apikey=${options.apiKey}` : '';
+
+  needle.get(`https://api.cryptowat.ch/exchanges${apiKeyString}`, (error, response) => {
+    const body = response && response.body;
+
+    if (!error && body && response.statusCode === 200) {
+      body.result.forEach((exchange) => {
+        exchangeLookup[exchange.symbol] = exchange.name;
+      });
+
+      setInterval(() => {
+        retrieveMarketData();
+      }, options.pollInterval);
+
+      return retrieveMarketData();
+    }
+
+    if (response && response.statusCode === 429) {
+      return writeToStdout(true);
+    }
+
+    writeToStdout(false, null);
+
+    // Retry on connection failure
+    return setTimeout(() => {
+      retrieveExchangeData();
+    }, options.pollInterval);
+  });
+};
+
+// Kick out the jams
+retrieveExchangeData();
+
